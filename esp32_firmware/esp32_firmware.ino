@@ -6,6 +6,7 @@
 #include <BLE2902.h>
 #include <string>
 
+
 #define MPU9250_ADDRESS 0x68
 #define ACCEL_CONFIG 0x1C // Register for changing the accelerometer range
 
@@ -140,7 +141,7 @@ void loop() {
   if (mpu.update()) {
       static uint32_t prev_ms = millis();
       if (millis() > prev_ms + 0) {
-          print_roll_pitch_yaw();
+          read_roll_pitch_yaw();
           prev_ms = millis();
       }
   }
@@ -161,27 +162,27 @@ void loop() {
       pixels.setPixelColor(i, pixels.Color(color, (255 - color), 0, 0));
       }
     pixels.show();
-    Serial.println("Turning LEDs OFF");
+    //Serial.println("Turning LEDs OFF");
     for (int i=NUMLED-1; i>=0; i--){
       pixels.setPixelColor(i, pixels.Color(0, 0, 0, 0));
       pixels.show();
       delay(10);
       }
-    Serial.println("LEDs OFF");
+    //Serial.println("LEDs OFF");
   }
 
   lastAccMax = AccMax; 
 }
 
 
-void print_roll_pitch_yaw() {
+void read_roll_pitch_yaw() {
     AccX = mpu.getAccX();
     AccY = mpu.getAccY();
     AccZ = mpu.getAccZ();
     AccMax = max(max(AccY, AccY), AccZ);
-    Serial.print(AccX, 2);
+    /*Serial.print(AccX, 2);
     Serial.print(", ");
     Serial.print(AccY, 2);
     Serial.print(", ");
-    Serial.println(AccZ, 2);
+    Serial.println(AccZ, 2);*/
 }
