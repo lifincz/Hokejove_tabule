@@ -26,6 +26,8 @@ float AccY = 0;
 float AccZ = 0;
 float AccMax = 0;
 int color = 0;
+int color_R = 0;
+int color_G = 0;
 float lastAccMax = 0;
 bool rising = 0;
 
@@ -114,6 +116,53 @@ void initialize_BLE(){
   esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_SCAN ,ESP_PWR_LVL_P9); 
   }
 
+void show_init_animation(){
+  for (int i = 0; i < NUMLED; i++) {
+        pixels.setPixelColor(i, pixels.Color(0, 255, 0, 0));
+        pixels.show();
+        delay(10);
+  }
+  for (int fadeValue = 255; fadeValue >= 0; fadeValue-=5) {
+        for (int j = 0; j < NUMLED; j++) {
+            // Set the color with the current fade value
+            pixels.setPixelColor(j, pixels.Color(0, fadeValue, 0, 0));
+        }
+        pixels.show();
+        delay(10);
+    }
+}
+
+void fade_out_leds(byte color_R,
+                   byte color_G,
+                   byte color_B,
+                   byte color_W){
+    
+    // Fade out LEDs
+    int fadeSteps = 51; // Number of steps for fade (e.g., 255/5)
+    for (int step = 0; step < fadeSteps; step++) {
+        // Calculate the fade value, starting from max brightness
+        int fadeValue = map(step, 0, fadeSteps - 1, color_R, 0);
+        
+        for (int j = 0; j < NUMLED; j++) {
+            // Calculate the current RGB values based on the fadeValue
+            int current_R = map(fadeValue, color_R, 0, 0, color_R);
+            int current_G = map(fadeValue, color_G, 0, 0, color_G);
+            int current_B = map(fadeValue, color_B, 0, 0, color_B);
+            int current_W = map(fadeValue, color_W, 0, 0, color_W);
+            
+            pixels.setPixelColor(j, pixels.Color(current_R, current_G, current_B, current_W));
+        }
+        pixels.show();
+        delay(10); // Adjust the delay for the fade speed
+    }
+
+    // Optionally turn off the LEDs completely at the end
+    for (int j = 0; j < NUMLED; j++) {
+        pixels.setPixelColor(j, pixels.Color(0, 0, 0, 0));
+    }
+    pixels.show();
+  }
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
@@ -132,6 +181,7 @@ void setup() {
     }
   }
   initialize_BLE();
+  show_init_animation();
   
 
 }
@@ -153,22 +203,22 @@ void loop() {
     rising = false;
     }
   
-  if ((AccMax >= 1.7) && (rising == false)){
+  if ((AccMax >= 1.7) && (rising == false)) {
     color = map(lastAccMax, 1.7, 5, 10, 255);
-    
+    color_R = color;
+    color_G = 255 - color;
+
     Serial.print("Turning LEDs ON, lastAccZ:");
     Serial.println(lastAccMax, 2);
-    for (int i=0; i<NUMLED; i++){
-      pixels.setPixelColor(i, pixels.Color(color, (255 - color), 0, 0));
-      }
+
+    // Turn on all LEDs at once
+    for (int i = 0; i < NUMLED; i++) {
+        pixels.setPixelColor(i, pixels.Color(color_R, color_G, 0, 0));
+    }
     pixels.show();
-    //Serial.println("Turning LEDs OFF");
-    for (int i=NUMLED-1; i>=0; i--){
-      pixels.setPixelColor(i, pixels.Color(0, 0, 0, 0));
-      pixels.show();
-      delay(10);
-      }
-    //Serial.println("LEDs OFF");
+
+    fade_out_leds(color_R, color_G, 0, 0);
+    
   }
 
   lastAccMax = AccMax; 
